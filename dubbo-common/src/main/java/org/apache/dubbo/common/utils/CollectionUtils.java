@@ -130,6 +130,7 @@ public class CollectionUtils {
     }
 
     public static String join(List<String> list, String separator) {
+        // 此种方式与guava的Joiner实现有点相同啊
         StringBuilder sb = new StringBuilder();
         for (String ele : list) {
             if (sb.length() > 0) {

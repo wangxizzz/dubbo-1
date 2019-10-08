@@ -58,7 +58,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
     private final CuratorFramework client;
     private Map<String, TreeCache> treeCacheMap = new ConcurrentHashMap<>();
 
-
+    // curator创建zk连接
     public CuratorZookeeperClient(URL url) {
         super(url);
         try {
@@ -97,6 +97,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
     @Override
     public void createPersistent(String path) {
         try {
+            // 默认创建的是永久节点
             client.create().forPath(path);
         } catch (NodeExistsException e) {
         } catch (Exception e) {
