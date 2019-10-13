@@ -38,7 +38,11 @@ import static org.apache.dubbo.rpc.Constants.SERVICE_FILTER_KEY;
  * ListenerProtocol
  */
 public class ProtocolFilterWrapper implements Protocol {
-
+    /**
+     * 在扩展类中，如果其构造函数中注入了一个其他的扩展点，那么这个类被认为是包装类
+     * 这是一种装饰器模式的体现，把通用的抽象逻辑进行封装或对子类进行增强，让子类可以更加专注具体的实现。
+     * 这也是扩展点的自动包装特性。
+     */
     private final Protocol protocol;
 
     public ProtocolFilterWrapper(Protocol protocol) {
@@ -114,6 +118,10 @@ public class ProtocolFilterWrapper implements Protocol {
         return protocol.getDefaultPort();
     }
 
+    /**
+     * 装饰模式的体现，把通用的逻辑进行封装，增强Protocol子类的export方法
+     * 也是代理模式的体现，AOP，代理了Protocol子类
+     */
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         if (REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {

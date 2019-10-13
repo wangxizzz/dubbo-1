@@ -55,6 +55,6 @@ public @interface Adaptive {
      *
      * @return parameter names in URL
      */
-    String[] value() default {};
+    String[] value() default {};  // 是一个数组，可以传入多个Key,会依次去匹配
 
 }
