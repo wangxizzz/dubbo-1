@@ -78,6 +78,7 @@ public class AdaptiveClassCodeGenerator {
      * test if given type has at least one method annotated with <code>SPI</code>
      */
     private boolean hasAdaptiveMethod() {
+        // 判断接口的方法是否存在Adaptive注解
         return Arrays.stream(type.getMethods()).anyMatch(m -> m.isAnnotationPresent(Adaptive.class));
     }
 
@@ -97,6 +98,7 @@ public class AdaptiveClassCodeGenerator {
 
         Method[] methods = type.getMethods();
         for (Method method : methods) {
+            // 生成方法。需要区分方法有Adaptive注解和没这个的注解
             code.append(generateMethod(method));
         }
         code.append("}");
@@ -199,25 +201,31 @@ public class AdaptiveClassCodeGenerator {
         Adaptive adaptiveAnnotation = method.getAnnotation(Adaptive.class);
         StringBuilder code = new StringBuilder(512);
         if (adaptiveAnnotation == null) {
+            // 无 Adaptive 注解方法代码生成逻辑
             return generateUnsupported(method);
         } else {
+            // 遍历参数列表，确定 URL 参数位置
             int urlTypeIndex = getUrlTypeIndex(method);
 
-            // found parameter in URL type
+            // urlTypeIndex != -1，表示参数列表中存在 URL 参数
             if (urlTypeIndex != -1) {
-                // Null Point check
+                // 为 URL 类型参数生成判空代码，格式如下：
+                // if (arg + urlTypeIndex == null)
+                //     throw new IllegalArgumentException("url == null");
                 code.append(generateUrlNullCheck(urlTypeIndex));
             } else {
-                // did not find parameter in URL type
+                // 参数列表中不存在 URL 类型参数
                 code.append(generateUrlAssignmentIndirectly(method));
             }
-
+            // 获取 Adaptive 注解值
             String[] value = getMethodAdaptiveValue(adaptiveAnnotation);
 
+            // 检测方法参数是否包含 Invocation 参数
             boolean hasInvocation = hasInvocationArgument(method);
-
+            // 添加方法参数类型是Invocation的参数判空代码
             code.append(generateInvocationArgumentNullCheck(method));
 
+            // 生成拓展名获取逻辑(生成根据URL参数匹配具体的扩展类代码)
             code.append(generateExtNameAssignment(value, hasInvocation));
             // check extName == null?
             code.append(generateExtNameNullCheck(value));
@@ -305,6 +313,7 @@ public class AdaptiveClassCodeGenerator {
 
     /**
      * test if method has argument of type <code>Invocation</code>
+     * 此段逻辑是检测方法列表中是否存在 Invocation 类型的参数，若存在，则为其生成判空代码和其他一些代码
      */
     private boolean hasInvocationArgument(Method method) {
         Class<?>[] pts = method.getParameterTypes();
@@ -323,11 +332,16 @@ public class AdaptiveClassCodeGenerator {
 
     /**
      * get value of adaptive annotation or if empty return splitted simple name
+     * Adaptive 注解值 value 类型为 String[]，可填写多个值，默认情况下为空数组。若 value 为非空数组，直接获取数组内容即可。
+     * 若 value 为空数组，则需进行额外处理。处理过程是将类名转换为字符数组，然后遍历字符数组，并将字符放入 StringBuilder 中。
+     * 若字符为大写字母，则向 StringBuilder 中添加点号，随后将字符变为小写存入 StringBuilder 中。
+     * 比如 LoadBalance 经过处理后，得到 load.balance。
      */
     private String[] getMethodAdaptiveValue(Adaptive adaptiveAnnotation) {
         String[] value = adaptiveAnnotation.value();
         // value is not set, use the value generated from class name as the key
         if (value.length == 0) {
+            // 获取类名，并将类名转换为字符数组,以.连接，并且拼接成字符串
             String splitName = StringUtils.camelToSplitName(type.getSimpleName(), ".");
             value = new String[]{splitName};
         }
@@ -345,7 +359,9 @@ public class AdaptiveClassCodeGenerator {
         Class<?>[] pts = method.getParameterTypes();
 
         // find URL getter method
+        // 遍历方法的参数类型列表
         for (int i = 0; i < pts.length; ++i) {
+            // 获取某一类型参数的全部方法，遍历方法列表，寻找可返回 URL 的 getter 方法
             for (Method m : pts[i].getMethods()) {
                 String name = m.getName();
                 if ((name.startsWith("get") || name.length() > 3)
@@ -353,12 +369,14 @@ public class AdaptiveClassCodeGenerator {
                         && !Modifier.isStatic(m.getModifiers())
                         && m.getParameterTypes().length == 0
                         && m.getReturnType() == URL.class) {
+                    // 判空
                     return generateGetUrlNullCheck(i, pts[i], name);
                 }
             }
         }
 
         // getter method not found, throw
+        // 如果所有参数中均不包含可返回 URL 的 getter 方法，则抛出异常
         throw new IllegalStateException("Failed to create adaptive class for interface " + type.getName()
                         + ": not found url parameter or url attribute in parameters of method " + method.getName());
 
