@@ -112,7 +112,7 @@ public class ExtensionLoader<T> {
 
     private volatile Throwable createAdaptiveInstanceError;
 
-    //拓展Wrapper实现类集合
+    //拓展Wrapper实现类集合  cacheWrapperClass()赋值，在加载所有扩展类时，会区分哪些时自适应的Class对象
     private Set<Class<?>> cachedWrapperClasses;
 
     //拓展名与加载对应拓展类发生的异常的映射
@@ -706,7 +706,7 @@ public class ExtensionLoader<T> {
         if ((value = value.trim()).length() > 0) {
             String[] names = NAME_SEPARATOR.split(value);
             if (names.length > 1) {
-                // 检测 SPI 注解内容是否合法，不合法则抛出异常
+                // 检测 SPI 注解内容是否合法，只能有一个默认值
                 throw new IllegalStateException("More than 1 default extension name on extension " + type.getName()
                         + ": " + Arrays.toString(names));
             }
@@ -799,7 +799,7 @@ public class ExtensionLoader<T> {
             // 检测 clazz 是否有默认的构造方法，如果没有，则抛出异常。(因为需要利用反射实例化对象)
             clazz.getConstructor();
             if (StringUtils.isEmpty(name)) {
-                // 如果 name 为空，则尝试从 Extension 注解中获取 name，或使用小写的类名作为 name
+                // 如果 name 为空，则尝试从 Extension 注解中获取 name，或使用小写的类名作为 name，主要用于兼容java SPI的配置
                 name = findAnnotationName(clazz);
                 if (name.length() == 0) {
                     throw new IllegalStateException("No such extension name for the class " + clazz.getName() + " in the config " + resourceURL);
