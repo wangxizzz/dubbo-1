@@ -26,10 +26,11 @@ import org.apache.dubbo.common.extension.SPI;
 public class SpiExtensionFactory implements ExtensionFactory {
 
     @Override
-    public <T> T getExtension(Class<T> type, String name) {
+    public <T> T getExtension(Class<T> type, String name) {    // name在这里没用到
         if (type.isInterface() && type.isAnnotationPresent(SPI.class)) {
             ExtensionLoader<T> loader = ExtensionLoader.getExtensionLoader(type);
             if (!loader.getSupportedExtensions().isEmpty()) {
+                // Setter自动注入，利用SPI自适应获取具体的扩展类
                 return loader.getAdaptiveExtension();
             }
         }
