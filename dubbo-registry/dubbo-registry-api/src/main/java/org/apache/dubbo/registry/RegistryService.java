@@ -87,6 +87,8 @@ public interface RegistryService {
     /**
      * 查询注册列表，与订阅的推模式相对应，这里为拉模式，只返回一次结果，通过url进行条件查询所匹配的所有URL集合。
      *
+     * 方法作用：获得消费者url订阅的服务URL列表
+     *
      * @see org.apache.dubbo.registry.NotifyListener#notify(List)
      * @param url 查询条件，不允许为空，如：consumer://10.20.153.10/com.alibaba.foo.BarService?version=1.0.0&application=kylin
      * @return 已注册信息列表，可能为空，含义同{@link org.apache.dubbo.registry.NotifyListener#notify(List<URL>)}的参数。
