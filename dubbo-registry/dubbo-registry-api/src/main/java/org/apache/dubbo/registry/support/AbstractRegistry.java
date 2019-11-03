@@ -62,6 +62,7 @@ import static org.apache.dubbo.registry.Constants.REGISTRY_FILESAVE_SYNC_KEY;
 
 /**
  * AbstractRegistry. (SPI, Prototype, ThreadSafe)
+ * 为了减轻注册中心的压力，在该类中实现了把本地URL缓存到property文件中的机制，并且实现了注册中心的注册、订阅等方法
  */
 public abstract class AbstractRegistry implements Registry {
 
@@ -73,17 +74,33 @@ public abstract class AbstractRegistry implements Registry {
     private static final int MAX_RETRY_TIMES_SAVE_PROPERTIES = 3;
     // Log output
     protected final Logger logger = LoggerFactory.getLogger(getClass());
-    // Local disk cache, where the special key value.registries records the list of registry centers, and the others are the list of notified service providers
+    /**
+     * 本地磁盘缓存，有一个特殊的key值为registies，记录的是注册中心列表，其他记录的都是服务提供者列表
+     * properties的数据跟本地文件的数据同步，当启动时，会从文件中读取数据到properties，而当properties中数据变化时，会写入到file
+     * 而properties是一个key对应一个列表，比如说key就是消费者的url，而值就是服务提供者列表、路由规则列表、配置规则列表。就是类似属性notified的含义。
+     * 需要注意的是properties有一个特殊的key为registies，记录的是注册中心列表
+     */
     private final Properties properties = new Properties();
-    // File cache timing writing
+    // 缓存写入执行器
     private final ExecutorService registryCacheExecutor = Executors.newFixedThreadPool(1, new NamedThreadFactory("DubboSaveRegistryCache", true));
-    // Is it synchronized to save the file
+    // 是否同步保存文件标志
     private final boolean syncSaveFile;
+    //数据版本号,因为每次写入file都是全部覆盖的写入，不是增量的去写入到文件，所以需要有这个版本号来避免老版本覆盖新版本
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final AtomicInteger savePropertiesRetryTimes = new AtomicInteger();
+    // 已注册 URL 集合
+    // 注册的 URL 不仅仅可以是服务提供者的，也可以是服务消费者的
     private final Set<URL> registered = new ConcurrentHashSet<>();
+
+    // 订阅URL的监听器集合
     private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();
+
+    // 某个消费者被通知的某一类型的 URL 集合
+    // 第一个key是消费者的URL，对应的就是哪个消费者。
+    // value是一个map集合，该map集合的key是分类的意思，例如providers、routes等，value就是被通知的URL集合
+    // 跟properties的区别是第一数据来源不是文件，而是从注册中心中读取，第二个notified根据分类把同一类的值做了聚合
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();
+    // 注册中心 URL
     private URL registryUrl;
     // Local disk cache file
     private File file;
