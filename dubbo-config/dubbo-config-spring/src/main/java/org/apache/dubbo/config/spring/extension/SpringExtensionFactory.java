@@ -40,7 +40,8 @@ import java.util.Set;
 public class SpringExtensionFactory implements ExtensionFactory {
     private static final Logger logger = LoggerFactory.getLogger(SpringExtensionFactory.class);
 
-    private static final Set<ApplicationContext> CONTEXTS = new ConcurrentHashSet<ApplicationContext>();
+    // 保存Spring上下文
+    private static final Set<ApplicationContext> CONTEXTS = new ConcurrentHashSet<>();
     private static final ApplicationListener SHUTDOWN_HOOK_LISTENER = new ShutdownHookListener();
 
     public static void addApplicationContext(ApplicationContext context) {
@@ -73,9 +74,10 @@ public class SpringExtensionFactory implements ExtensionFactory {
         if (type.isInterface() && type.isAnnotationPresent(SPI.class)) {
             return null;
         }
-
+        // 遍历所有Spring上下文
         for (ApplicationContext context : CONTEXTS) {
             if (context.containsBean(name)) {
+                // 按名字查找
                 Object bean = context.getBean(name);
                 if (type.isInstance(bean)) {
                     return (T) bean;
@@ -91,6 +93,7 @@ public class SpringExtensionFactory implements ExtensionFactory {
 
         for (ApplicationContext context : CONTEXTS) {
             try {
+                // 按类型查找
                 return context.getBean(type);
             } catch (NoUniqueBeanDefinitionException multiBeanExe) {
                 logger.warn("Find more than 1 spring extensions (beans) of type " + type.getName() + ", will stop auto injection. Please make sure you have specified the concrete parameter type and there's only one extension of that type.");

@@ -208,6 +208,8 @@ public class ExtensionLoader<T> {
      * @param group group
      * @return extension list which are activated.
      * @see #getActivateExtension(org.apache.dubbo.common.URL, String[], String)
+     *
+     * 获取所有自动激活扩展点
      */
     public List<T> getActivateExtension(URL url, String key, String group) {
         String value = url.getParameter(key);

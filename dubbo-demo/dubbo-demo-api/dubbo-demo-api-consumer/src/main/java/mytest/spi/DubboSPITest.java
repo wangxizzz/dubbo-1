@@ -12,8 +12,8 @@ public class DubboSPITest {
         // 指定加载哪个
         ExtensionLoader<Person> extensionLoader =
                 ExtensionLoader.getExtensionLoader(Person.class);
-        Person optimusPrime = extensionLoader.getExtension("blackPerson");
-        optimusPrime.sayHello();
+//        Person optimusPrime = extensionLoader.getExtension("blackPerson");
+//        optimusPrime.sayHello();
         Person bumblebee = extensionLoader.getExtension("whitePerson");
         bumblebee.sayHello();
     }
