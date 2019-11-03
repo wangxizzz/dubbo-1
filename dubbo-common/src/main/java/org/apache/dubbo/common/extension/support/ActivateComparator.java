@@ -26,6 +26,7 @@ import java.util.Comparator;
 
 /**
  * OrderComparator
+ * 自动激活拓展对象的排序器
  */
 public class ActivateComparator implements Comparator<Object> {
 
@@ -47,7 +48,7 @@ public class ActivateComparator implements Comparator<Object> {
         }
 
         Class<?> inf = findSpi(o1.getClass());
-
+        // 解析排序用的属性
         ActivateInfo a1 = parseActivate(o1.getClass());
         ActivateInfo a2 = parseActivate(o2.getClass());
 
@@ -75,6 +76,7 @@ public class ActivateComparator implements Comparator<Object> {
                 }
             }
         }
+        // 使用Activate注解的 `order` 属性，排序。
         int n1 = a1 == null ? 0 : a1.order;
         int n2 = a2 == null ? 0 : a2.order;
         // never return 0 even if n1 equals n2, otherwise, o1 and o2 will override each other in collection like HashSet
