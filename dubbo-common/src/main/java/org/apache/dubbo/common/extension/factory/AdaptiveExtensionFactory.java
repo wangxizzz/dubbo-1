@@ -26,17 +26,21 @@ import java.util.List;
 
 /**
  * AdaptiveExtensionFactory
+ * 该类是ExtensionFactory的适配器类，也就是注解@Adaptive中适配器类的使用.
+ * 当@Adaptive打在类上的情况
  */
 @Adaptive
 public class AdaptiveExtensionFactory implements ExtensionFactory {
-
+    //扩展对象的集合，默认的可以分为dubbo 的SPI中接口实现类对象或者Spring bean对象
     private final List<ExtensionFactory> factories;
 
     // 当newInstance()时。会走到无参构造函数
     public AdaptiveExtensionFactory() {
         ExtensionLoader<ExtensionFactory> loader = ExtensionLoader.getExtensionLoader(ExtensionFactory.class);
         List<ExtensionFactory> list = new ArrayList<>();
+        //遍历所有支持的扩展名
         for (String name : loader.getSupportedExtensions()) {
+            //扩展对象加入到集合中
             list.add(loader.getExtension(name));
         }
         factories = Collections.unmodifiableList(list);
@@ -46,6 +50,7 @@ public class AdaptiveExtensionFactory implements ExtensionFactory {
     public <T> T getExtension(Class<T> type, String name) {
         // 遍历所有工厂进行查找
         for (ExtensionFactory factory : factories) {
+            //通过扩展接口和扩展名获得扩展对象
             T extension = factory.getExtension(type, name);
             if (extension != null) {
                 return extension;
