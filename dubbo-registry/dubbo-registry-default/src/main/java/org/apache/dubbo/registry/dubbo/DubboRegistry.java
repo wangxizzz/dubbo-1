@@ -46,6 +46,7 @@ public class DubboRegistry extends FailbackRegistry {
     private final static Logger logger = LoggerFactory.getLogger(DubboRegistry.class);
 
     // Reconnecting detection cycle: 3 seconds (unit:millisecond)
+    // 重新连接周期
     private static final int RECONNECT_PERIOD_DEFAULT = 3 * 1000;
 
     // Scheduled executor service
@@ -55,14 +56,15 @@ public class DubboRegistry extends FailbackRegistry {
     private final ScheduledFuture<?> reconnectFuture;
 
     // The lock for client acquisition process, lock the creation process of the client instance to prevent repeated clients
+    // 客户端的锁，保证客户端的原子性，可见行，线程安全。
     private final ReentrantLock clientLock = new ReentrantLock();
-
+    // 注册中心Invoker
     private final Invoker<RegistryService> registryInvoker;
 
     private final RegistryService registryService;
 
     /**
-     * The time in milliseconds the reconnectTimer will wait
+     * // 任务调度器reconnectTimer将等待的时间
      */
     private final int reconnectPeriod;
 
@@ -70,8 +72,9 @@ public class DubboRegistry extends FailbackRegistry {
         super(registryInvoker.getUrl());
         this.registryInvoker = registryInvoker;
         this.registryService = registryService;
-        // Start reconnection timer
+        // 从url中获取重试间隔时间
         this.reconnectPeriod = registryInvoker.getUrl().getParameter(REGISTRY_RECONNECT_PERIOD_KEY, RECONNECT_PERIOD_DEFAULT);
+        // 每reconnectPeriod秒去连接，首次连接也延迟reconnectPeriod秒
         reconnectFuture = reconnectTimer.scheduleWithFixedDelay(() -> {
             // Check and connect to the registry
             try {

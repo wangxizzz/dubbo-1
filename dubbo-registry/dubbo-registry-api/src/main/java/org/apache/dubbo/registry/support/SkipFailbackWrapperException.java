@@ -20,7 +20,7 @@ package org.apache.dubbo.registry.support;
  * Wrapper Exception, it is used to indicate that {@link FailbackRegistry} skips Failback.
  * <p>
  * NOTE: Expect to find other more conventional ways of instruction.
- *
+ *自定义的是一个跳过失败重试的异常
  * @see FailbackRegistry
  */
 public class SkipFailbackWrapperException extends RuntimeException {

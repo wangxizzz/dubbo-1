@@ -33,6 +33,7 @@ public class RegistryStatusChecker implements StatusChecker {
 
     @Override
     public Status check() {
+        // 获取所有注册中心
         Collection<Registry> registries = AbstractRegistryFactory.getRegistries();
         if (registries.isEmpty()) {
             return new Status(Status.Level.UNKNOWN);
