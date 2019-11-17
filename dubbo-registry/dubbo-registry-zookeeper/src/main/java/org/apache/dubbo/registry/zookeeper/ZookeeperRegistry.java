@@ -59,13 +59,13 @@ import static org.apache.dubbo.common.constants.RegistryConstants.ROUTERS_CATEGO
 public class ZookeeperRegistry extends FailbackRegistry {
 
     private final static Logger logger = LoggerFactory.getLogger(ZookeeperRegistry.class);
-
+    // 默认zk的/路径名称
     private final static String DEFAULT_ROOT = "dubbo";
-    // group参数值
+    // group参数值，默认为DEFAULT_ROOT
     private final String root;
-
+    // 服务接口集合
     private final Set<String> anyServices = new ConcurrentHashSet<>();
-
+    // 监听器集合
     private final ConcurrentMap<URL, ConcurrentMap<NotifyListener, ChildListener>> zkListeners = new ConcurrentHashMap<>();
 
     private final ZookeeperClient zkClient;
@@ -132,6 +132,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
             // 客户端第一次连接上注册中心，会获取全量的数据，service会被设置成特殊的*
             if (ANY_VALUE.equals(url.getServiceInterface())) {
                 String root = toRootPath();
+                // 获取该url的监听器集合
                 ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
                 if (listeners == null) {
                     // 缓存中没有
@@ -156,11 +157,14 @@ public class ZookeeperRegistry extends FailbackRegistry {
                 }
                 // 创建持久节点，接下来订阅持久节点的直接子节点
                 zkClient.create(root, false);
+                // 向zookeeper的service节点发起订阅，获得Service接口全名数组
                 List<String> services = zkClient.addChildListener(root, zkListener);
                 if (CollectionUtils.isNotEmpty(services)) {
+                    // 遍历Service接口全名数组
                     for (String service : services) {
                         service = URL.decode(service);
                         anyServices.add(service);
+                        // 发起该service层的订阅
                         subscribe(url.setPath(service).addParameters(INTERFACE_KEY, service,
                                 Constants.CHECK_KEY, String.valueOf(false)), listener);
                     }
@@ -168,6 +172,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
             } else {
                 List<URL> urls = new ArrayList<>();
                 // 根据url，获取一组要订阅的路径
+                // 遍历分类数组
                 for (String path : toCategoriesPath(url)) {
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
                     if (listeners == null) {
@@ -243,6 +248,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private String toServicePath(URL url) {
         String name = url.getServiceInterface();
+        // 如果是包括所有服务，则返回根节点
         if (ANY_VALUE.equals(name)) {
             return toRootPath();
         }
