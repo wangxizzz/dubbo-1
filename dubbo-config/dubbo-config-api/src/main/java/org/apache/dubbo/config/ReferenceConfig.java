@@ -240,12 +240,16 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         checkMetadataReport();
     }
 
+    /**
+     * 引用服务
+     */
     public synchronized T get() {
         checkAndUpdateSubConfigs();
 
         if (destroyed) {
             throw new IllegalStateException("The invoker of ReferenceConfig(" + url + ") has already destroyed!");
         }
+        // 初始化
         if (ref == null) {
             init();
         }
@@ -275,7 +279,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         }
         checkStubAndLocal(interfaceClass);
         checkMock(interfaceClass);
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
 
         map.put(SIDE_KEY, CONSUMER_SIDE);
 
@@ -285,13 +289,13 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             if (revision != null && revision.length() > 0) {
                 map.put(REVISION_KEY, revision);
             }
-
+            // 获取服务方法
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 logger.warn("No method found in service interface " + interfaceClass.getName());
                 map.put(METHODS_KEY, ANY_VALUE);
             } else {
-                map.put(METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), COMMA_SEPARATOR));
+                map.put(METHODS_KEY, StringUtils.join(new HashSet<>(Arrays.asList(methods)), COMMA_SEPARATOR));
             }
         }
         map.put(INTERFACE_KEY, interfaceName);
@@ -304,7 +308,8 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         appendParameters(map, this);
         Map<String, Object> attributes = null;
         if (CollectionUtils.isNotEmpty(methods)) {
-            attributes = new HashMap<String, Object>();
+            attributes = new HashMap<>();
+            // 将 MethodConfig 对象数组，添加到 `map` 集合中。
             for (MethodConfig methodConfig : methods) {
                 appendParameters(map, methodConfig, methodConfig.getName());
                 String retryKey = methodConfig.getName() + ".retry";

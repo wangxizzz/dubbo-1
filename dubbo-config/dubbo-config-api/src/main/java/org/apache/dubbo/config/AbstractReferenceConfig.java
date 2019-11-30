@@ -33,6 +33,8 @@ import static org.apache.dubbo.rpc.cluster.Constants.CLUSTER_STICKY_KEY;
 /**
  * AbstractConsumerConfig
  *
+ *  抽象引用配置类
+ *
  * @export
  * @see org.apache.dubbo.config.ReferenceConfig
  */

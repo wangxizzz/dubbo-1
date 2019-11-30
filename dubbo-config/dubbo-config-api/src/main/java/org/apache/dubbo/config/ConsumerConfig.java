@@ -21,6 +21,8 @@ import org.apache.dubbo.common.utils.StringUtils;
 /**
  * The service consumer default configuration
  *
+ * 实现服务消费端的默认配置
+ *
  * @export
  */
 public class ConsumerConfig extends AbstractReferenceConfig {
