@@ -50,13 +50,15 @@ import static org.apache.dubbo.common.utils.ReflectUtils.findMethodByMethodSigna
 
 /**
  * Utility methods and public methods for parsing configuration
- *
+ * AbstractConfig 主要提供配置解析与校验相关的工具方法
  * @export
  */
 public abstract class AbstractConfig implements Serializable {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractConfig.class);
     private static final long serialVersionUID = 4267533505537413570L;
+
+    // ========== 属性值的格式校验，参见本类的 `#checkXXX` 方法 BEGIN ==========
 
     /**
      * The maximum length of a <b>parameter's value</b>
@@ -97,6 +99,8 @@ public abstract class AbstractConfig implements Serializable {
      * The pattern matches a property key
      */
     private static final Pattern PATTERN_KEY = Pattern.compile("[*,\\-._0-9a-zA-Z]+");
+
+    // ========== 属性值的格式校验，参见本类的 `#checkXXX` 方法 END ==========
 
     /**
      * The legacy properties container
@@ -154,6 +158,13 @@ public abstract class AbstractConfig implements Serializable {
         appendParameters(parameters, config, null);
     }
 
+    /**
+     * 将配置对象的属性，添加到参数集合
+     *
+     * @param parameters 参数集合
+     * @param config 配置对象
+     * @param prefix 属性前缀
+     */
     @SuppressWarnings("unchecked")
     protected static void appendParameters(Map<String, String> parameters, Object config, String prefix) {
         if (config == null) {
@@ -168,15 +179,18 @@ public abstract class AbstractConfig implements Serializable {
                     if (method.getReturnType() == Object.class || parameter != null && parameter.excluded()) {
                         continue;
                     }
+                    // 获取属性key
                     String key;
                     if (parameter != null && parameter.key().length() > 0) {
                         key = parameter.key();
                     } else {
                         key = calculatePropertyFromGetter(name);
                     }
+                    // 获取属性value
                     Object value = method.invoke(config);
                     String str = String.valueOf(value).trim();
                     if (value != null && str.length() > 0) {
+                        // 转义
                         if (parameter != null && parameter.escaped()) {
                             str = URL.encode(str);
                         }
@@ -211,7 +225,13 @@ public abstract class AbstractConfig implements Serializable {
     protected static void appendAttributes(Map<String, Object> parameters, Object config) {
         appendAttributes(parameters, config, null);
     }
-
+    /**
+     * 将带有 @Parameter(attribute = true) 配置对象的属性，添加到参数集合
+     *
+     * @param parameters 参数集合
+     * @param config 配置对象
+     * @param prefix 前缀
+     */
     @Deprecated
     protected static void appendAttributes(Map<String, Object> parameters, Object config, String prefix) {
         if (config == null) {

@@ -91,21 +91,42 @@ public /*final**/
 class URL implements Serializable {
 
     private static final long serialVersionUID = -1985165475234910535L;
+    /**
+     * URL 采用标准格式：protocol://username:password@host:port/path?key=value&key=value
+     *
+     * 比如：dubbo://192.168.3.17:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider
+     * &default.delay=-1&default.retries=0&default.service.filter=demoFilter&delay=-1&dubbo=2.0.0&generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=19031&side=provider&timestamp=1519651641799
+     */
 
+    /**
+     * 协议名
+     */
     private final String protocol;
-
+    /**
+     * 用户名
+     */
     private final String username;
-
+    /**
+     * 密码
+     */
     private final String password;
-
-    // by default, host to registry
+    /**
+     * by default, host to registry
+     * 地址
+     */
     private final String host;
-
-    // by default, port to registry
+    /**
+     * by default, port to registry
+     * 端口
+     */
     private final int port;
-
+    /**
+     * 路径（服务名）
+     */
     private final String path;
-
+    /**
+     * 参数集合
+     */
     private final Map<String, String> parameters;
 
     // ==== cache ====
@@ -1189,6 +1210,7 @@ class URL implements Serializable {
         return buildString(appendUser, appendParameter, false, false, parameters);
     }
 
+    // 拼接URL
     private String buildString(boolean appendUser, boolean appendParameter, boolean useIP, boolean useService, String... parameters) {
         StringBuilder buf = new StringBuilder();
         if (StringUtils.isNotEmpty(protocol)) {
@@ -1228,6 +1250,7 @@ class URL implements Serializable {
         }
 
         if (appendParameter) {
+            // 拼接参数
             buildParameters(buf, true, parameters);
         }
         return buf.toString();
