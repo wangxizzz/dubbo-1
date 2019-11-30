@@ -465,7 +465,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             name = DUBBO;
         }
 
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put(SIDE_KEY, PROVIDER_SIDE);
 
         appendRuntimeParameters(map);
@@ -547,7 +547,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 logger.warn("No method found in service interface " + interfaceClass.getName());
                 map.put(METHODS_KEY, ANY_VALUE);
             } else {
-                map.put(METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
+                map.put(METHODS_KEY, StringUtils.join(new HashSet<>(Arrays.asList(methods)), ","));
             }
         }
         if (!ConfigUtils.isEmpty(token)) {
@@ -574,6 +574,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
             // export to local if the config is not remote (export to remote only when config is remote)
             if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
+                // 本地暴露服务
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)

@@ -79,11 +79,13 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
         RootBeanDefinition beanDefinition = new RootBeanDefinition();
         beanDefinition.setBeanClass(beanClass);
         beanDefinition.setLazyInit(false);
+        // 尝试从 id、name、interface 获取 beanName
         String id = element.getAttribute("id");
         if (StringUtils.isEmpty(id) && required) {
             String generatedBeanName = element.getAttribute("name");
             if (StringUtils.isEmpty(generatedBeanName)) {
                 if (ProtocolConfig.class.equals(beanClass)) {
+                    // 如果解析到protocol标签，则默认的beanName=dubbo
                     generatedBeanName = "dubbo";
                 } else {
                     generatedBeanName = element.getAttribute("interface");
@@ -94,6 +96,7 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
             }
             id = generatedBeanName;
             int counter = 2;
+            // 为dubbo的Bean生成一个唯一
             while (parserContext.getRegistry().containsBeanDefinition(id)) {
                 id = generatedBeanName + (counter++);
             }
@@ -102,12 +105,16 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
             if (parserContext.getRegistry().containsBeanDefinition(id)) {
                 throw new IllegalStateException("Duplicate spring bean id " + id);
             }
+            // 注册Bean
             parserContext.getRegistry().registerBeanDefinition(id, beanDefinition);
+            // 为Bean添加id属性，后续添加其他属性
             beanDefinition.getPropertyValues().addPropertyValue("id", id);
         }
+        // 配置服务调用的协议
         if (ProtocolConfig.class.equals(beanClass)) {
             for (String name : parserContext.getRegistry().getBeanDefinitionNames()) {
                 BeanDefinition definition = parserContext.getRegistry().getBeanDefinition(name);
+                // 遍历所有的bean
                 PropertyValue property = definition.getPropertyValues().getPropertyValue("protocol");
                 if (property != null) {
                     Object value = property.getValue();
@@ -116,7 +123,9 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
                     }
                 }
             }
-        } else if (ServiceBean.class.equals(beanClass)) {
+        }
+        // 解析<dubbo:service>标签
+        else if (ServiceBean.class.equals(beanClass)) {
             String className = element.getAttribute("class");
             if (StringUtils.isNotEmpty(className)) {
                 RootBeanDefinition classDefinition = new RootBeanDefinition();
