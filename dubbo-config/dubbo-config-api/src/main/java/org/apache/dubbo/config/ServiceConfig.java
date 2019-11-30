@@ -97,6 +97,8 @@ import static org.apache.dubbo.rpc.cluster.Constants.EXPORT_KEY;
 /**
  * ServiceConfig
  *
+ * 服务提供者暴露服务配置类
+ *
  * @export
  */
 public class ServiceConfig<T> extends AbstractServiceConfig {
@@ -128,7 +130,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     /**
      * A random port cache, the different protocols who has no port specified have different random port
      */
-    private static final Map<String, Integer> RANDOM_PORT_MAP = new HashMap<String, Integer>();
+    private static final Map<String, Integer> RANDOM_PORT_MAP = new HashMap<>();
 
     /**
      * A delayed exposure service timer
@@ -366,16 +368,22 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         return getProtocols().size() == 1 && LOCAL_PROTOCOL.equalsIgnoreCase(getProtocols().get(0).getName());
     }
 
+    /**
+     * 暴露服务
+     */
     public synchronized void export() {
         checkAndUpdateSubConfigs();
 
+        // 是否暴露服务
         if (!shouldExport()) {
             return;
         }
-
+        // 延迟暴露
         if (shouldDelay()) {
             DELAY_EXPORT_EXECUTOR.schedule(this::doExport, getDelay(), TimeUnit.MILLISECONDS);
-        } else {
+        }
+        // 立即暴露
+        else {
             doExport();
         }
     }
@@ -455,38 +463,44 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             String pathKey = URL.buildKey(getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), group, version);
             ProviderModel providerModel = new ProviderModel(pathKey, ref, interfaceClass);
             ApplicationModel.initProviderModel(pathKey, providerModel);
+            // 处理单个协议暴露
             doExportUrlsFor1Protocol(protocolConfig, registryURLs);
         }
     }
 
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
+        // 获取协议名
         String name = protocolConfig.getName();
         if (StringUtils.isEmpty(name)) {
             name = DUBBO;
         }
-
         Map<String, String> map = new HashMap<>();
         map.put(SIDE_KEY, PROVIDER_SIDE);
 
+        // 添加其他参数。比如dubbo版本号与时间戳、pid
         appendRuntimeParameters(map);
+
+        // 将各种配置对象，添加到 `map` 集合中。
         appendParameters(map, metrics);
         appendParameters(map, application);
         appendParameters(map, module);
-        // remove 'default.' prefix for configs from ProviderConfig
-        // appendParameters(map, provider, Constants.DEFAULT_KEY);
         appendParameters(map, provider);
         appendParameters(map, protocolConfig);
         appendParameters(map, this);
+        // 将 MethodConfig 对象数组，添加到 `map` 集合中。
         if (CollectionUtils.isNotEmpty(methods)) {
             for (MethodConfig method : methods) {
+                // 将MethodConfig添加到参数集合
                 appendParameters(map, method, method.getName());
                 String retryKey = method.getName() + ".retry";
                 if (map.containsKey(retryKey)) {
+                    // 这里把属性 remove是啥意思？
                     String retryValue = map.remove(retryKey);
                     if (Boolean.FALSE.toString().equals(retryValue)) {
                         map.put(method.getName() + ".retries", "0");
                     }
                 }
+                // 将 ArgumentConfig 对象数组，添加到 `map` 集合中。
                 List<ArgumentConfig> arguments = method.getArguments();
                 if (CollectionUtils.isNotEmpty(arguments)) {
                     for (ArgumentConfig argument : arguments) {
@@ -539,9 +553,10 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         } else {
             String revision = Version.getVersion(interfaceClass, version);
             if (revision != null && revision.length() > 0) {
-                map.put(REVISION_KEY, revision);
+                map.put(REVISION_KEY, revision);   // 修订号
             }
 
+            // 获得方法数组(获取该服务的所有方法，以逗号分割)
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 logger.warn("No method found in service interface " + interfaceClass.getName());
@@ -558,10 +573,14 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             }
         }
         // export service
+        // 获取URL的参数：host、port
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
+
+        // 创建 Dubbo URL 对象
         URL url = new URL(name, host, port, getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), map);
 
+        // 配置规则，参见《配置规则》http://dubbo.apache.org/zh-cn/docs/user/demos/config-rule.html
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                 .hasExtension(url.getProtocol())) {
             url = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)

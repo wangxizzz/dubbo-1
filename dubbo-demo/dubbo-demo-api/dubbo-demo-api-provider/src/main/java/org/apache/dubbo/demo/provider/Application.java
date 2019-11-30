@@ -30,6 +30,7 @@ public class Application {
         service.setRegistry(new RegistryConfig("zookeeper://127.0.0.1:2181"));
         service.setInterface(DemoService.class);
         service.setRef(new DemoServiceImpl());
+        // 对外暴露服务及注册服务
         service.export();
         System.in.read();
     }

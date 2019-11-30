@@ -91,7 +91,8 @@ import static org.apache.dubbo.rpc.cluster.Constants.TAG_KEY;
 
 /**
  * AbstractDefaultConfig
- *
+ * 抽象接口配置类
+ * 需要寻找在 《Dubbo 用户指南 —— dubbo:service》 或 《Dubbo 用户指南 —— dubbo:reference》 文档。
  * @export
  */
 public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
@@ -192,6 +193,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
     /**
      * Check whether the registry config is exists, and then conversion it to {@link RegistryConfig}
+     * 初始化 RegistryConfig 的配置属性
      */
     protected void checkRegistry() {
         loadRegistriesFromBackwardConfig();
@@ -597,7 +599,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         if (registries == null || registries.isEmpty()) {
             String address = ConfigUtils.getProperty("dubbo.registry.address");
             if (address != null && address.length() > 0) {
-                List<RegistryConfig> tmpRegistries = new ArrayList<RegistryConfig>();
+                List<RegistryConfig> tmpRegistries = new ArrayList<>();
                 String[] as = D_REGISTRY_SPLIT_PATTERN.split(address);
                 for (String a : as) {
                     RegistryConfig registryConfig = new RegistryConfig();
