@@ -63,6 +63,7 @@ public class RegistryConfig extends AbstractConfig {
 
     /**
      * Protocol for register center
+     * 比如：<dubbo:registry protocol="zookeeper" address="10.20.153.10:2181,10.20.153.11:2181,10.20.153.12:2181"/>
      */
     private String protocol;
 

@@ -35,7 +35,7 @@ import static org.apache.dubbo.rpc.Constants.REFERENCE_FILTER_KEY;
 import static org.apache.dubbo.rpc.Constants.SERVICE_FILTER_KEY;
 
 /**
- * ListenerProtocol
+ * ProtocolFilterWrapper
  */
 public class ProtocolFilterWrapper implements Protocol {
     /**
@@ -53,9 +53,18 @@ public class ProtocolFilterWrapper implements Protocol {
     }
 
 
-
+    /**
+     * 创建带 Filter 链的 Invoker 对象
+     *
+     * @param invoker Invoker 对象
+     * @param key 获取 URL 参数名
+     * @param group 分组
+     * @param <T> 泛型
+     * @return Invoker 对象
+     */
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
         Invoker<T> last = invoker;
+        // 获取自激活的过滤器组
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
 
         if (!filters.isEmpty()) {
@@ -124,9 +133,11 @@ public class ProtocolFilterWrapper implements Protocol {
      */
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // 注册中心.  本地暴露服务不会符合这个判断。在远程暴露服务会符合暴露该判断
         if (REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {
             return protocol.export(invoker);
         }
+        // 建立带有 Filter 过滤链的 Invoker ，再暴露服务。
         return protocol.export(buildInvokerChain(invoker, SERVICE_FILTER_KEY, CommonConstants.PROVIDER));
     }
 
