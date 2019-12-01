@@ -60,13 +60,17 @@ import static org.apache.dubbo.common.constants.CommonConstants.HIDE_KEY_PREFIX;
  */
 public class DubboBeanDefinitionParser implements BeanDefinitionParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(DubboBeanDefinitionParser.class);
-    private static final Pattern GROUP_AND_VERION = Pattern.compile("^[\\-.0-9_a-zA-Z]+(\\:[\\-.0-9_a-zA-Z]+)?$");
     private static final String ONRETURN = "onreturn";
     private static final String ONTHROW = "onthrow";
     private static final String ONINVOKE = "oninvoke";
     private static final String METHOD = "Method";
+    /**
+     * Bean 对象的类
+     */
     private final Class<?> beanClass;
+    /**
+     * 是否需要在 Bean 对象的编号( id ) 不存在时，自动生成编号。没有被其他应用引用的配置对象，无需自动生成编号。例如有 <dubbo:reference />
+     */
     private final boolean required;
 
     public DubboBeanDefinitionParser(Class<?> beanClass, boolean required) {
@@ -78,6 +82,10 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
     private static BeanDefinition parse(Element element, ParserContext parserContext, Class<?> beanClass, boolean required) {
         RootBeanDefinition beanDefinition = new RootBeanDefinition();
         beanDefinition.setBeanClass(beanClass);
+        /**
+         * 引用缺省是延迟初始化的，只有引用被注入到其它 Bean，或被 getBean() 获取，才会初始化。
+         * 如果需要饥饿加载，即没有人引用也立即生成动态代理，可以配置：<dubbo:reference ... init="true" />
+         */
         beanDefinition.setLazyInit(false);
         // 尝试从 id、name、interface 获取 beanName
         String id = element.getAttribute("id");
@@ -110,11 +118,14 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
             // 为Bean添加id属性，后续添加其他属性
             beanDefinition.getPropertyValues().addPropertyValue("id", id);
         }
-        // 配置服务调用的协议
+        // 处理 `<dubbo:protocol` /> 的特殊情况
         if (ProtocolConfig.class.equals(beanClass)) {
+            // 例如：【顺序要这样】
+            // <dubbo:service interface="com.alibaba.dubbo.demo.DemoService" protocol="dubbo" ref="demoService"/>
+            // <dubbo:protocol id="dubbo" name="dubbo" port="20880"/>
             for (String name : parserContext.getRegistry().getBeanDefinitionNames()) {
                 BeanDefinition definition = parserContext.getRegistry().getBeanDefinition(name);
-                // 遍历所有的bean
+                // 遍历所有的bean,获取标签属性中有protocol
                 PropertyValue property = definition.getPropertyValues().getPropertyValue("protocol");
                 if (property != null) {
                     Object value = property.getValue();
@@ -126,21 +137,34 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
         }
         // 解析<dubbo:service>标签
         else if (ServiceBean.class.equals(beanClass)) {
+            /**
+             * 处理 `class` 属性。例如
+             * <dubbo:service id="sa" interface="com.alibaba.dubbo.demo.DemoService"
+             * class="com.alibaba.dubbo.demo.provider.DemoServiceImpl" >
+             * 不推荐这种用法
+             */
             String className = element.getAttribute("class");
             if (StringUtils.isNotEmpty(className)) {
+                /**
+                 * 相当于内嵌<bean class="com.alibaba.dubbo.demo.provider.DemoServiceImpl" />
+                 */
                 RootBeanDefinition classDefinition = new RootBeanDefinition();
                 classDefinition.setBeanClass(ReflectUtils.forName(className));
                 classDefinition.setLazyInit(false);
                 parseProperties(element.getChildNodes(), classDefinition);
+                // 把beanDefinition的ref属性指向内嵌的Bean
                 beanDefinition.getPropertyValues().addPropertyValue("ref", new BeanDefinitionHolder(classDefinition, id + "Impl"));
             }
-        } else if (ProviderConfig.class.equals(beanClass)) {
+        }
+        // 解析<dubbo:provider /> 的内嵌子元素 <dubbo:service />
+        else if (ProviderConfig.class.equals(beanClass)) {
             parseNested(element, parserContext, ServiceBean.class, true, "service", "provider", id, beanDefinition);
         } else if (ConsumerConfig.class.equals(beanClass)) {
             parseNested(element, parserContext, ReferenceBean.class, false, "reference", "consumer", id, beanDefinition);
         }
         Set<String> props = new HashSet<>();
         ManagedMap parameters = null;
+        // 循环 Bean 对象的 setting 方法，将属性赋值到 Bean 对象
         for (Method setter : beanClass.getMethods()) {
             String name = setter.getName();
             if (name.length() > 3 && name.startsWith("set")
