@@ -40,9 +40,13 @@ import static org.apache.dubbo.common.constants.CommonConstants.DUMP_DIRECTORY;
 public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbortPolicyWithReport.class);
-
+    /**
+     * 线程名，非id
+     */
     private final String threadName;
-
+    /**
+     * URL对象
+     */
     private final URL url;
 
     private static volatile long lastPrintTime = 0;
@@ -86,7 +90,7 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
         if (now - lastPrintTime < TEN_MINUTES_MILLS) {
             return;
         }
-
+        // 获得信号量。保证，同一时间，有且仅有一个线程执行打印
         if (!guard.tryAcquire()) {
             return;
         }
@@ -96,7 +100,7 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
             String dumpPath = url.getParameter(DUMP_DIRECTORY, System.getProperty("user.home"));
 
             SimpleDateFormat sdf;
-
+            // 获得系统
             String os = System.getProperty(OS_NAME_KEY).toLowerCase();
 
             // window system don't support ":" in file name
@@ -119,6 +123,7 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
             lastPrintTime = System.currentTimeMillis();
         });
         //must shutdown thread pool ,if not will lead to OOM
+        // 单线程池也需要关闭
         pool.shutdown();
 
     }

@@ -38,6 +38,17 @@ import static org.apache.dubbo.common.constants.CommonConstants.THREAD_NAME_KEY;
  * Creates a thread pool that reuses a fixed number of threads
  *
  * @see java.util.concurrent.Executors#newFixedThreadPool(int)
+ *
+ * 参考配置如下：
+ * <dubbo:service interface="com.alibaba.dubbo.demo.DemoService" ref="demoService">
+ *
+ *     <dubbo:parameter key="threadname" value="shuaiqi" />
+ *     <dubbo:parameter key="threads" value="123" />
+ *     <dubbo:parameter key="queues" value="10" />
+ *
+ * </dubbo:service>
+ *
+ *
  */
 public class FixedThreadPool implements ThreadPool {
 
@@ -46,10 +57,12 @@ public class FixedThreadPool implements ThreadPool {
         String name = url.getParameter(THREAD_NAME_KEY, DEFAULT_THREAD_NAME);
         int threads = url.getParameter(THREADS_KEY, DEFAULT_THREADS);
         int queues = url.getParameter(QUEUES_KEY, DEFAULT_QUEUES);
+        // 线程不消亡。线程消亡的条件是，线程数大于核心线程数，并且idle时间超过了keepAliveTime.
+        // FixThreadPool一开始的线程数就等于coreThread,最大值也等于coreThread，所以不会出现线程消亡条件
         return new ThreadPoolExecutor(threads, threads, 0, TimeUnit.MILLISECONDS,
-                queues == 0 ? new SynchronousQueue<Runnable>() :
-                        (queues < 0 ? new LinkedBlockingQueue<Runnable>()
-                                : new LinkedBlockingQueue<Runnable>(queues)),
+                queues == 0 ? new SynchronousQueue<>() :
+                        (queues < 0 ? new LinkedBlockingQueue<>()
+                                : new LinkedBlockingQueue<>(queues)),
                 new NamedInternalThreadFactory(name, true), new AbortPolicyWithReport(name, url));
     }
 
