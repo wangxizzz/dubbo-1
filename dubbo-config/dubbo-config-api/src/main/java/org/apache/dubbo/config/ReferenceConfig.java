@@ -134,6 +134,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
     /**
      * The url for peer-to-peer invocation
+     * 直连服务提供者
      */
     private String url;
 
@@ -360,7 +361,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
-        } else {
+        }
+        // 远程引用
+        else {
             urls.clear(); // reference retry init will add url to urls, lead to OOM
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = SEMICOLON_SPLIT_PATTERN.split(url);

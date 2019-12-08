@@ -32,6 +32,11 @@ public class DeprecatedInvokerListener extends InvokerListenerAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeprecatedInvokerListener.class);
 
+    /**
+     * 当引用废弃的服务时，打印日志提醒
+     * @param invoker
+     * @throws RpcException
+     */
     @Override
     public void referred(Invoker<?> invoker) throws RpcException {
         if (invoker.getUrl().getParameter(DEPRECATED_KEY, false)) {
