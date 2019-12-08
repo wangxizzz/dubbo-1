@@ -27,6 +27,7 @@ import java.util.Map;
  */
 class InjvmExporter<T> extends AbstractExporter<T> {
 
+    // 服务键
     private final String key;
 
     private final Map<String, Exporter<?>> exporterMap;
@@ -35,6 +36,7 @@ class InjvmExporter<T> extends AbstractExporter<T> {
         super(invoker);
         this.key = key;
         this.exporterMap = exporterMap;
+        // 加入exportMap
         exporterMap.put(key, this);
     }
 

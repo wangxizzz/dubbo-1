@@ -27,7 +27,9 @@ import org.apache.dubbo.rpc.Invoker;
 public abstract class AbstractExporter<T> implements Exporter<T> {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
-
+    /**
+     * 持有Invoker对象
+     */
     private final Invoker<T> invoker;
 
     private volatile boolean unexported = false;

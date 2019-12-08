@@ -165,6 +165,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     /**
      * The reference of the interface implementation
+     *  指向接口实现类
      */
     private T ref;
 
@@ -676,6 +677,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 .build();
         // protocol 服务调用的协议
         Exporter<?> exporter = protocol.export(
+                // 获取Invoker
                 PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, local));
         exporters.add(exporter);
         logger.info("Export dubbo service " + interfaceClass.getName() + " to local registry url : " + local);

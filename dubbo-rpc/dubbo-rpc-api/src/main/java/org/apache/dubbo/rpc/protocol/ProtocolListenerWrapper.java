@@ -62,7 +62,7 @@ public class ProtocolListenerWrapper implements Protocol {
         }
         // 获得 ExporterListener 数组
         // 创建带 ExporterListener 的 Exporter 对象
-        return new ListenerExporterWrapper<T>(protocol.export(invoker),
+        return new ListenerExporterWrapper<>(protocol.export(invoker),
                 Collections.unmodifiableList(ExtensionLoader.getExtensionLoader(ExporterListener.class)
                         .getActivateExtension(invoker.getUrl(), EXPORTER_LISTENER_KEY)));
     }
