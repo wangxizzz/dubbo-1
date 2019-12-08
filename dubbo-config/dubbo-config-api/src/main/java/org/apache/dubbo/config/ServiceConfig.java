@@ -151,7 +151,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
      *
      * 非配置。
      */
-    private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>();
+    private final List<Exporter<?>> exporters = new ArrayList<>();
 
     /**
      * The interface name of the exported service
@@ -617,6 +617,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         if (LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
                             continue;
                         }
+                        // "dynamic" ：服务是否动态注册，如果设为false，注册后将显示后disable状态，需人工启用，并且服务提供者停止时，也不会自动取消册，需人工禁用。
                         url = url.addParameterIfAbsent(DYNAMIC_KEY, registryURL.getParameter(DYNAMIC_KEY));
                         URL monitorUrl = loadMonitor(registryURL);
                         if (monitorUrl != null) {

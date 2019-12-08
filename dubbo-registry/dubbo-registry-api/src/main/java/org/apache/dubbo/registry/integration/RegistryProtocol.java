@@ -193,30 +193,30 @@ public class RegistryProtocol implements Protocol {
 
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
+        // 获取注册中心地址
         URL registryUrl = getRegistryUrl(originInvoker);
-        // url to export locally
+        // 获取服务提供者地址
         URL providerUrl = getProviderUrl(originInvoker);
 
-        // Subscribe the override data
-        // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call
-        //  the same service. Because the subscribed is cached key with the name of the service, it causes the
-        //  subscription information to cover.
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(providerUrl);
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
 
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
-        //export invoker
+        // 暴露服务
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
         // url to registry
         final Registry registry = getRegistry(originInvoker);
+        // 获取已经注册服务提供者url
         final URL registeredProviderUrl = getRegisteredProviderUrl(providerUrl, registryUrl);
+        // 向本地注册表
         ProviderInvokerWrapper<T> providerInvokerWrapper = ProviderConsumerRegTable.registerProvider(originInvoker,
                 registryUrl, registeredProviderUrl);
         //to judge if we need to delay publish
         boolean register = providerUrl.getParameter(REGISTER_KEY, true);
         if (register) {
+            // 向注册中心注册服务提供者(自己)
             register(registryUrl, registeredProviderUrl);
             providerInvokerWrapper.setReg(true);
         }
@@ -236,7 +236,15 @@ public class RegistryProtocol implements Protocol {
         serviceConfigurationListeners.put(providerUrl.getServiceKey(), serviceConfigurationListener);
         return serviceConfigurationListener.overrideUrl(providerUrl);
     }
-
+    /**
+     * 暴露服务。
+     *
+     * 此处的 Local 指的是，本地启动服务，但是不包括向注册中心注册服务的意思。
+     *
+     * @param originInvoker 原始 Invoker
+     * @param <T> 泛型
+     * @return Exporter 对象
+     */
     @SuppressWarnings("unchecked")
     private <T> ExporterChangeableWrapper<T> doLocalExport(final Invoker<T> originInvoker, URL providerUrl) {
         String key = getCacheKey(originInvoker);
@@ -479,6 +487,7 @@ public class RegistryProtocol implements Protocol {
         }
     }
 
+    // 可销毁的Exporter
     private static class DestroyableExporter<T> implements Exporter<T> {
 
         private Exporter<T> exporter;
@@ -630,16 +639,17 @@ public class RegistryProtocol implements Protocol {
     }
 
     /**
-     * exporter proxy, establish the corresponding relationship between the returned exporter and the exporter
-     * exported by the protocol, and can modify the relationship at the time of override.
+     * 建立【返回的 Exporter】与【Protocol export 出的 Exporter】的对应关系。
+     * 在 override 时可以进行关系修改。
      *
      * @param <T>
      */
     private class ExporterChangeableWrapper<T> implements Exporter<T> {
 
         private final ExecutorService executor = newSingleThreadExecutor(new NamedThreadFactory("Exporter-Unexport", true));
-
+        // 源Invoker对象
         private final Invoker<T> originInvoker;
+        // 已经暴露的Exporter对象
         private Exporter<T> exporter;
         private URL subscribeUrl;
         private URL registerUrl;
