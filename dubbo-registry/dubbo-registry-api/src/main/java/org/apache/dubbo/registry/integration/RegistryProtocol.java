@@ -137,6 +137,7 @@ public class RegistryProtocol implements Protocol {
         INSTANCE = this;
     }
 
+    // 饿汉式单例
     public static RegistryProtocol getRegistryProtocol() {
         if (INSTANCE == null) {
             ExtensionLoader.getExtensionLoader(Protocol.class).getExtension(REGISTRY_PROTOCOL); // load

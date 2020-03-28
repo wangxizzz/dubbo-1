@@ -83,6 +83,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         this.root = group;
         zkClient = zookeeperTransporter.connect(url);
         zkClient.addStateListener(state -> {
+            // 注册监听事件
             if (state == StateListener.RECONNECTED) {
                 try {
                     recover();
@@ -111,6 +112,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
     @Override
     public void doRegister(URL url) {
         try {
+            // 是否动态数据。若为 false ，该数据为持久数据，当注册方退出时，数据依然保存在注册中心。
             zkClient.create(toUrlPath(url), url.getParameter(DYNAMIC_KEY, true));
         } catch (Throwable e) {
             throw new RpcException("Failed to register " + url + " to zookeeper " + getUrl() + ", cause: " + e.getMessage(), e);
@@ -273,6 +275,11 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return toServicePath(url) + PATH_SEPARATOR + url.getParameter(CATEGORY_KEY, DEFAULT_CATEGORY);
     }
 
+    /**
+     * Root + Service + Type(category) + URL
+     * @param url
+     * @return
+     */
     private String toUrlPath(URL url) {
         return toCategoryPath(url) + PATH_SEPARATOR + URL.encode(url.toFullString());
     }

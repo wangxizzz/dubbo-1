@@ -37,6 +37,8 @@ import java.util.function.BiConsumer;
  * @serial Don't change the class name and package name.
  * @see org.apache.dubbo.rpc.Invoker#invoke(Invocation)
  * @see AppResponse
+ *
+ *      Result 是会话域，它持有调用过程中返回值，异常等。
  */
 public interface Result extends CompletionStage<Result>, Future<Result>, Serializable {
 

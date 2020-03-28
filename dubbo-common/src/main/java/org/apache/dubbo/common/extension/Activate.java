@@ -49,6 +49,7 @@ public @interface Activate {
      *
      * @return group names to match
      * @see ExtensionLoader#getActivateExtension(URL, String, String)
+     * 如没有Group设置，则不过滤
      */
     String[] group() default {};
 
@@ -62,6 +63,7 @@ public @interface Activate {
      * @return URL parameter keys
      * @see ExtensionLoader#getActivateExtension(URL, String)
      * @see ExtensionLoader#getActivateExtension(URL, String, String)
+     * 如没有设置，则不过滤。
      */
     String[] value() default {};
 
@@ -87,6 +89,8 @@ public @interface Activate {
      * Absolute ordering info, optional
      *
      * @return absolute ordering info
+     *
+     * 排序信息，可以不提供
      */
     int order() default 0;
 }

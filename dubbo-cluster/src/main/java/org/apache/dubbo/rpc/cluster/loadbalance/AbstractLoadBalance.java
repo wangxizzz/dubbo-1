@@ -38,12 +38,21 @@ public abstract class AbstractLoadBalance implements LoadBalance {
      * Calculate the weight according to the uptime proportion of warmup time
      * the new weight will be within 1(inclusive) to weight(inclusive)
      *
-     * @param uptime the uptime in milliseconds
-     * @param warmup the warmup time in milliseconds
-     * @param weight the weight of an invoker
+     * @param uptime the uptime in milliseconds  启动总时长
+     * @param warmup the warmup time in milliseconds    预热总时长
+     * @param weight the weight of an invoker   权重
      * @return weight which takes warmup into account
+     *
+     * 根据calculateWarmupWeight()方法实现可知，随着provider的启动时间越来越长，慢慢提升权重直到weight，且权重最小值为1，所以：
+     *
+     * 如果 provider 运行了 1 分钟，那么 weight 为 10，即只有最终需要承担的 10% 流量；
+     * 如果 provider 运行了 2 分钟，那么 weight 为 20，即只有最终需要承担的 20% 流量；
+     * 如果 provider 运行了 5 分钟，那么 weight 为 50，即只有最终需要承担的 50% 流量；
+     * … …
+     * 如果 provider 运行了 10 分钟，那么 weight 为 100，即只有最终需要承担的 100% 流量；
      */
     static int calculateWarmupWeight(int uptime, int warmup, int weight) {
+        // (uptime / warmup) * weight   相当于进度百分比 * 权重
         int ww = (int) ( uptime / ((float) warmup / weight));
         return ww < 1 ? 1 : (Math.min(ww, weight));
     }
@@ -71,16 +80,21 @@ public abstract class AbstractLoadBalance implements LoadBalance {
      * @return weight
      */
     int getWeight(Invoker<?> invoker, Invocation invocation) {
+        // 获取权重，默认是100
         int weight = invoker.getUrl().getMethodParameter(invocation.getMethodName(), WEIGHT_KEY, DEFAULT_WEIGHT);
         if (weight > 0) {
             long timestamp = invoker.getUrl().getParameter(TIMESTAMP_KEY, 0L);
             if (timestamp > 0L) {
+                // 获得启动总时长
                 long uptime = System.currentTimeMillis() - timestamp;
                 if (uptime < 0) {
                     return 1;
                 }
+                // 获取预热总时长
                 int warmup = invoker.getUrl().getParameter(WARMUP_KEY, DEFAULT_WARMUP);
+
                 if (uptime > 0 && uptime < warmup) {
+                    // 处于预热中
                     weight = calculateWarmupWeight((int)uptime, warmup, weight);
                 }
             }

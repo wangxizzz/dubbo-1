@@ -29,6 +29,11 @@
 
     <bean id="demoService" class="org.apache.dubbo.demo.provider.DemoServiceImpl"/>
 
-    <dubbo:service interface="org.apache.dubbo.demo.DemoService" ref="demoService"/>
+    <dubbo:service interface="org.apache.dubbo.demo.DemoService" ref="demoService" retries="2" version="1.0.0">
+        <dubbo:method name="sayHello" retry="false">
+        </dubbo:method>
+    </dubbo:service>
 
+    <dubbo:provider listener="listener1" filter="myfilter1,default"/>
+    <!--加入defualt表示可以配置myfilter1在默认的filter前面-->
 </beans>

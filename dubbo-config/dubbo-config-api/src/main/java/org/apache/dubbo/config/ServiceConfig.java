@@ -348,7 +348,9 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 throw new IllegalStateException("The local implementation class " + localClass.getName() + " not implement interface " + interfaceName);
             }
         }
+        // 处理服务接口客户端本地代理( `stub` )相关
         if (stub != null) {
+            // 设为 true，表示使用缺省代理类名，即：接口名 + Stub 后缀
             if (Boolean.TRUE.toString().equals(stub)) {
                 stub = interfaceName + "Stub";
             }
@@ -474,7 +476,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             String pathKey = URL.buildKey(getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), group, version);
             ProviderModel providerModel = new ProviderModel(pathKey, ref, interfaceClass);
             ApplicationModel.initProviderModel(pathKey, providerModel);
-            // 逐个向注册中心分组暴露服务
+            // 遍历协议 向 多注册中心注册
             doExportUrlsFor1Protocol(protocolConfig, registryURLs);
         }
     }
@@ -501,11 +503,11 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         // 将 MethodConfig 对象数组，添加到 `map` 集合中。
         if (CollectionUtils.isNotEmpty(methods)) {
             for (MethodConfig method : methods) {
-                // 将MethodConfig添加到参数集合
+                // 将MethodConfig添加到参数集合(这是一个dubbo的配置)
                 appendParameters(map, method, method.getName());
                 String retryKey = method.getName() + ".retry";
                 if (map.containsKey(retryKey)) {
-                    // 这里把属性 remove是啥意思？
+                    // 当 配置了 `MethodConfig.retry = false` 时，强制禁用重试
                     String retryValue = map.remove(retryKey);
                     if (Boolean.FALSE.toString().equals(retryValue)) {
                         map.put(method.getName() + ".retries", "0");
@@ -637,13 +639,20 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                             registryURL = registryURL.addParameter(PROXY_KEY, proxy);
                         }
 
+                        // 使用 ProxyFactory 创建 Invoker 对象
+                        // 创建 Invoker 对象。该 Invoker 对象，执行 #invoke(invocation) 方法时，内部会调用 Service 对象( ref )对应的调用方法
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
+
+                        // 在 Invoker 对象的基础上，增加了当前服务提供者 ServiceConfig 对象
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                        // 使用 Protocol 暴露 Invoker 对象
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
                         exporters.add(exporter);
                     }
                 } else {
+                    // 用于被服务消费者直连服务提供者
+                    // 配置直连：可在 <dubbo:reference> 中配置 url属性值 指向提供者url即可，将绕过注册中心，多个地址用分号隔开
                     if (logger.isInfoEnabled()) {
                         logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
                     }

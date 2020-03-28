@@ -44,6 +44,7 @@ public class JdkProxyFactory extends AbstractProxyFactory {
                                       Class<?>[] parameterTypes,
                                       Object[] arguments) throws Throwable {
                 Method method = proxy.getClass().getMethod(methodName, parameterTypes);
+                // 直接使用反射，最终会调到目标方法
                 return method.invoke(proxy, arguments);
             }
         };

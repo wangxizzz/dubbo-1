@@ -81,7 +81,10 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
         }
         return null;
     }
-    
+
+    /**
+     * 存在慢的提供者累积请求的问题，比如：第二台机器很慢，但没挂，当请求调到第二台时就卡在那，久而久之，所有请求都卡在调到第二台上。
+     */
     @Override
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
         String key = invokers.get(0).getUrl().getServiceKey() + "." + invocation.getMethodName();
@@ -111,6 +114,7 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
             }
             long cur = weightedRoundRobin.increaseCurrent();
             weightedRoundRobin.setLastUpdate(now);
+            // 基于权重的轮询。权重越大，就会选择这个invoker执行
             if (cur > maxCurrent) {
                 maxCurrent = cur;
                 selectedInvoker = invoker;

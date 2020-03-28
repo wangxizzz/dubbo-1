@@ -118,7 +118,6 @@ public class AccessLogFilter implements Filter {
         if (logSet.size() < LOG_MAX_BUFFER) {
             logSet.add(accessLogData);
         } else {
-            //TODO we needs use force writing to file so that buffer gets clear and new log can be written.
             logger.warn("AccessLog buffer is full skipping buffer ");
         }
     }

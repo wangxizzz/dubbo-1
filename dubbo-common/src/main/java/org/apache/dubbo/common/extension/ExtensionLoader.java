@@ -86,6 +86,7 @@ public class ExtensionLoader<T> {
     // type表示获取ExtensionLoader时，传入的接口Class对象
     private final Class<?> type;
 
+    // 对象工厂，功能上和 Spring IOC 一致
     private final ExtensionFactory objectFactory;
 
     //缓存的扩展类与扩展名的映射，和cachedClasses的key和value对换。
@@ -128,6 +129,7 @@ public class ExtensionLoader<T> {
     }
 
     @SuppressWarnings("unchecked")
+    // 根据拓展点的接口，获得拓展加载器  type表示 Filter、Protocol 接口
     public static <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
         if (type == null) {
             throw new IllegalArgumentException("Extension type == null");
@@ -212,7 +214,9 @@ public class ExtensionLoader<T> {
      * 获取所有自动激活扩展点
      */
     public List<T> getActivateExtension(URL url, String key, String group) {
+        // 从dubbo URL中获取参数
         String value = url.getParameter(key);
+        // 获得符合自动激活条件的拓展对象数组
         return getActivateExtension(url, StringUtils.isEmpty(value) ? null : COMMA_SPLIT_PATTERN.split(value), group);
     }
 
@@ -228,6 +232,7 @@ public class ExtensionLoader<T> {
     public List<T> getActivateExtension(URL url, String[] values, String group) {
         List<T> exts = new ArrayList<>();
         List<String> names = values == null ? new ArrayList<>(0) : Arrays.asList(values);
+        // 判断不存在配置 `"-name"` 。例如，<dubbo:service filter="-default" /> ，代表移除所有默认过滤器。
         if (!names.contains(REMOVE_VALUE_PREFIX + DEFAULT_KEY)) {
             getExtensionClasses();
             for (Map.Entry<String, Object> entry : cachedActivates.entrySet()) {
@@ -259,6 +264,8 @@ public class ExtensionLoader<T> {
             String name = names.get(i);
             if (!name.startsWith(REMOVE_VALUE_PREFIX)
                     && !names.contains(REMOVE_VALUE_PREFIX + name)) {
+                // 将配置的自定义在自动激活的拓展对象们前面。例如，<dubbo:service filter="demo,default,demo2" /> ，
+                // 则 DemoFilter 就会放在默认的过滤器前面
                 if (DEFAULT_KEY.equals(name)) {
                     if (!usrs.isEmpty()) {
                         exts.addAll(0, usrs);
@@ -350,6 +357,7 @@ public class ExtensionLoader<T> {
     /**
      * Find the extension with the given name. If the specified name is not found, then {@link IllegalStateException}
      * will be thrown.
+     * 返回指定名字的扩展对象。如果指定名字的扩展不存在，则抛异常 IllegalStateException
      */
     @SuppressWarnings("unchecked")
     // 加载普通扩展类入口
@@ -603,7 +611,7 @@ public class ExtensionLoader<T> {
                 if (method.getAnnotation(DisableInject.class) != null) {
                     continue;
                 }
-                // 后面参数都不管了？？
+                // 获取需要注入的属性类型
                 Class<?> pt = method.getParameterTypes()[0];
                 // 如果是原始类型
                 if (ReflectUtils.isPrimitives(pt)) {
@@ -666,6 +674,10 @@ public class ExtensionLoader<T> {
         return getExtensionClasses().get(name);
     }
 
+    /**
+     * 获取扩展实现类Map. 并没有实例化
+     * @return
+     */
     private Map<String, Class<?>> getExtensionClasses() {
         // 从缓存中获取已加载的拓展类(cachedClasses表示会存储类路径下所有扩展类的Class对象)
         Map<String, Class<?>> classes = cachedClasses.get();

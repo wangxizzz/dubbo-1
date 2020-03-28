@@ -56,6 +56,8 @@ public class ProtocolFilterWrapper implements Protocol {
     /**
      * 创建带 Filter 链的 Invoker 对象
      *
+     * 每次远程方法执行，该拦截都会被执行
+     *
      * @param invoker Invoker 对象
      * @param key 获取 URL 参数名
      * @param group 分组

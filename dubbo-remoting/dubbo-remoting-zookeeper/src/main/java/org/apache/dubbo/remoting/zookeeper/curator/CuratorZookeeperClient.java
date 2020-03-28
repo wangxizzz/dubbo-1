@@ -150,6 +150,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
     @Override
     protected void deletePath(String path) {
         try {
+            // 节点删除，不是删除整个节点的路径，而是删除path最后一个节点
             client.delete().forPath(path);
         } catch (NoNodeException e) {
         } catch (Exception e) {
