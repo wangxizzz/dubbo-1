@@ -42,6 +42,10 @@ class StatItem {
         this.token = buildLongAdder(rate);
     }
 
+    /**
+     * 算法基于令牌桶，每个间隔时间产生固定的令牌，然后由请求去拿。
+     * @return
+     */
     public boolean isAllowable() {
         long now = System.currentTimeMillis();
         if (now > lastResetTime + interval) {
